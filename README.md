@@ -116,3 +116,13 @@ npm run dev
 - Idempotency keys
 - Reservation retry handling
 - Better UI feedback
+
+## Deployment
+
+Live URL:
+
+https://allo-reservation-system-flax.vercel.app
+
+GitHub Repository:
+
+https://github.com/Harsha-18-H/allo-reservation-system
