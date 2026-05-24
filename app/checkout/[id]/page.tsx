@@ -10,7 +10,7 @@ import {
   useRouter
 } from "next/navigation";
 
-export default function Checkout(){
+export default function Checkout() {
 
   const params =
     useParams();
@@ -28,31 +28,34 @@ export default function Checkout(){
     setLoading
   ] = useState(false);
 
-  useEffect(()=>{
+  useEffect(() => {
 
     const timer =
+      setInterval(() => {
 
-    setInterval(()=>{
+        setSeconds(prev => {
 
-      setSeconds(prev=>{
+          if (prev <= 1) {
 
-        if(prev<=1){
+            clearInterval(timer);
 
-          clearInterval(
-            timer
-          );
+            alert(
+              "Reservation expired"
+            );
 
-          return 0;
+            router.push("/");
 
-        }
+            return 0;
 
-        return prev-1;
+          }
 
-      });
+          return prev - 1;
 
-    },1000);
+        });
 
-    return()=>{
+      }, 1000);
+
+    return () => {
 
       clearInterval(
         timer
@@ -60,91 +63,112 @@ export default function Checkout(){
 
     };
 
-  },[]);
+  }, [router]);
 
-  async function confirm(){
+  async function confirm() {
 
-    setLoading(true);
+    try {
 
-    const response =
+      setLoading(true);
 
-    await fetch(
+      const response =
 
-      `/api/reservations/${params.id}/confirm`,
+      await fetch(
 
-      {
+        `/api/reservations/${params.id}/confirm`,
 
-        method:"POST"
+        {
+
+          method: "POST"
+
+        }
+
+      );
+
+      if (
+        response.status === 410
+      ) {
+
+        alert(
+          "Reservation expired"
+        );
+
+        router.push("/");
+
+        return;
 
       }
 
-    );
+      if (
+        response.ok
+      ) {
 
-    if(
-      response.status===410
-    ){
+        alert(
+          "Purchase confirmed"
+        );
+
+        router.push("/");
+
+        return;
+
+      }
 
       alert(
-        "Reservation expired"
+        "Purchase failed"
+      );
+
+    }
+
+    finally {
+
+      setLoading(false);
+
+    }
+
+  }
+
+  async function cancel() {
+
+    try {
+
+      setLoading(true);
+
+      await fetch(
+
+        `/api/reservations/${params.id}/release`,
+
+        {
+
+          method: "POST"
+
+        }
+
+      );
+
+      alert(
+        "Reservation cancelled"
       );
 
       router.push("/");
 
-      return;
+    }
+
+    finally {
+
+      setLoading(false);
 
     }
 
-    if(
-      response.ok
-    ){
-
-      alert(
-        "Purchase confirmed"
-      );
-
-      router.push("/");
-
-    }
-
-    setLoading(false);
-
   }
 
-  async function cancel(){
-
-    setLoading(true);
-
-    await fetch(
-
-      `/api/reservations/${params.id}/release`,
-
-      {
-
-        method:"POST"
-
-      }
-
-    );
-
-    alert(
-      "Reservation cancelled"
-    );
-
-    router.push("/");
-
-  }
-
-  return(
+  return (
 
     <div
     className="p-8"
     >
 
       <h1
-      className=
-
-      "text-3xl font-bold"
-
+      className="text-3xl font-bold"
       >
 
         Checkout
@@ -164,16 +188,18 @@ export default function Checkout(){
       </p>
 
       <p
-      className="mt-3"
+      className="mt-3 text-lg"
       >
 
         Time Remaining:
 
+        {" "}
+
         {
 
-        Math.floor(
-          seconds/60
-        )
+          Math.floor(
+            seconds / 60
+          )
 
         }
 
@@ -181,33 +207,31 @@ export default function Checkout(){
 
         {
 
-        String(
+          String(
 
-        seconds%60
+            seconds % 60
 
-        ).padStart(
+          ).padStart(
 
-        2,
+            2,
 
-        "0"
+            "0"
 
-        )
+          )
 
         }
 
       </p>
 
       <div
-      className=
-
-      "mt-6 flex gap-3"
-
+      className="mt-6 flex gap-3"
       >
 
         <button
 
         disabled={
-          loading
+          loading ||
+          seconds===0
         }
 
         onClick={
@@ -216,7 +240,7 @@ export default function Checkout(){
 
         className=
 
-        "bg-green-500 text-white px-4 py-2 rounded"
+        "bg-green-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
 
         >
 
@@ -227,7 +251,8 @@ export default function Checkout(){
         <button
 
         disabled={
-          loading
+          loading ||
+          seconds===0
         }
 
         onClick={
@@ -236,7 +261,7 @@ export default function Checkout(){
 
         className=
 
-        "bg-red-500 text-white px-4 py-2 rounded"
+        "bg-red-500 text-white px-4 py-2 rounded disabled:bg-gray-400"
 
         >
 
