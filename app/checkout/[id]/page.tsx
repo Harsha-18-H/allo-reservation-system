@@ -10,7 +10,7 @@ import {
   useRouter
 } from "next/navigation";
 
-export default function Checkout() {
+export default function Checkout(){
 
   const params =
     useParams();
@@ -28,34 +28,39 @@ export default function Checkout() {
     setLoading
   ] = useState(false);
 
-  useEffect(() => {
+  const [
+    expired,
+    setExpired
+  ] = useState(false);
+
+  useEffect(()=>{
 
     const timer =
-      setInterval(() => {
+      setInterval(()=>{
 
-        setSeconds(prev => {
+        setSeconds(prev=>{
 
-          if (prev <= 1) {
+          if(prev<=1){
 
-            clearInterval(timer);
-
-            alert(
-              "Reservation expired"
+            clearInterval(
+              timer
             );
 
-            router.push("/");
+            setExpired(
+              true
+            );
 
             return 0;
 
           }
 
-          return prev - 1;
+          return prev-1;
 
         });
 
-      }, 1000);
+      },1000);
 
-    return () => {
+    return()=>{
 
       clearInterval(
         timer
@@ -63,11 +68,61 @@ export default function Checkout() {
 
     };
 
-  }, [router]);
+  },[]);
 
-  async function confirm() {
+  useEffect(()=>{
 
-    try {
+    async function handleExpiry(){
+
+      if(!expired){
+
+        return;
+
+      }
+
+      try{
+
+        await fetch(
+
+          `/api/reservations/${params.id}/release`,
+
+          {
+
+            method:"POST"
+
+          }
+
+        );
+
+      }
+
+      catch(error){
+
+        console.error(
+          error
+        );
+
+      }
+
+      alert(
+        "Reservation expired"
+      );
+
+      router.push("/");
+
+    }
+
+    handleExpiry();
+
+  },[
+    expired,
+    router,
+    params.id
+  ]);
+
+  async function confirm(){
+
+    try{
 
       setLoading(true);
 
@@ -79,15 +134,15 @@ export default function Checkout() {
 
         {
 
-          method: "POST"
+          method:"POST"
 
         }
 
       );
 
-      if (
-        response.status === 410
-      ) {
+      if(
+        response.status===410
+      ){
 
         alert(
           "Reservation expired"
@@ -99,9 +154,9 @@ export default function Checkout() {
 
       }
 
-      if (
+      if(
         response.ok
-      ) {
+      ){
 
         alert(
           "Purchase confirmed"
@@ -119,7 +174,7 @@ export default function Checkout() {
 
     }
 
-    finally {
+    finally{
 
       setLoading(false);
 
@@ -127,9 +182,9 @@ export default function Checkout() {
 
   }
 
-  async function cancel() {
+  async function cancel(){
 
-    try {
+    try{
 
       setLoading(true);
 
@@ -139,7 +194,7 @@ export default function Checkout() {
 
         {
 
-          method: "POST"
+          method:"POST"
 
         }
 
@@ -153,7 +208,7 @@ export default function Checkout() {
 
     }
 
-    finally {
+    finally{
 
       setLoading(false);
 
@@ -161,7 +216,7 @@ export default function Checkout() {
 
   }
 
-  return (
+  return(
 
     <div
     className="p-8"
@@ -198,7 +253,7 @@ export default function Checkout() {
         {
 
           Math.floor(
-            seconds / 60
+            seconds/60
           )
 
         }
@@ -209,7 +264,7 @@ export default function Checkout() {
 
           String(
 
-            seconds % 60
+            seconds%60
 
           ).padStart(
 
@@ -230,8 +285,8 @@ export default function Checkout() {
         <button
 
         disabled={
-          loading ||
-          seconds===0
+          loading||
+          expired
         }
 
         onClick={
@@ -251,8 +306,8 @@ export default function Checkout() {
         <button
 
         disabled={
-          loading ||
-          seconds===0
+          loading||
+          expired
         }
 
         onClick={
