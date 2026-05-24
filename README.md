@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Allo Reservation System
 
-## Getting Started
+Inventory reservation platform built using Next.js, Prisma, PostgreSQL and TypeScript.
 
-First, run the development server:
+## Stack
+
+- Next.js App Router
+- TypeScript
+- Prisma ORM
+- PostgreSQL (Supabase)
+- TailwindCSS
+
+## Features
+
+- Product inventory across warehouses
+- Temporary reservation system
+- Concurrency-safe reservation handling
+- Reservation confirmation flow
+- Reservation cancellation flow
+- Automatic reservation expiry
+- Live countdown timer
+- Inventory updates without refresh
+
+## Reservation Flow
+
+1. User reserves stock
+2. Inventory reserved temporarily
+3. Reservation valid for 10 minutes
+4. Payment success → reservation confirmed
+5. Payment failed/cancelled → stock released
+6. Expired reservation → automatically released
+
+## Concurrency Strategy
+
+Reservation endpoint uses:
+
+- PostgreSQL transaction
+- Serializable isolation
+- Row-level locking (`FOR UPDATE`)
+
+This guarantees:
+
+Example:
+
+Inventory = 1
+
+Two simultaneous reserve requests:
+
+Request A → succeeds
+
+Request B → receives 409
+
+Overselling prevented.
+
+## Expiry Mechanism
+
+Expired reservations are cleaned through:
+
+```
+
+GET /api/cron/expire
+
+```
+
+Cron execution:
+
+- Find expired reservations
+- Release reserved inventory
+- Mark reservation EXPIRED
+
+Production deployment can schedule this endpoint through Vercel Cron.
+
+## Local Setup
+
+Install:
+
+```bash
+npm install
+```
+
+Environment variables:
+
+```
+
+DATABASE_URL=
+
+```
+
+Run migrations:
+
+```bash
+npx prisma migrate deploy
+```
+
+Seed:
+
+```bash
+npx prisma db seed
+```
+
+Run app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Tradeoffs
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Redis locking skipped to reduce complexity
+- PostgreSQL row locking provides sufficient concurrency guarantees
+- Cron cleanup chosen for simplicity and reliability
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Future Improvements
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Redis distributed locking
+- Idempotency keys
+- Reservation retry handling
+- Better UI feedback
